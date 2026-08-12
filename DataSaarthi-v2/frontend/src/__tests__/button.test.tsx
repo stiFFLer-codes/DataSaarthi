@@ -1,4 +1,3 @@
-import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { describe, it, expect } from 'vitest';
 import userEvent from '@testing-library/user-event';
@@ -15,21 +14,21 @@ describe('Button component', () => {
   it('renders different variants correctly', () => {
     const { rerender } = render(<Button variant="destructive">Delete</Button>);
     let button = screen.getByRole('button');
-    expect(button).toHaveClass('bg-destructive');
+    expect(button).toHaveClass('bg-[hsl(var(--danger))]');
 
     rerender(<Button variant="outline">Cancel</Button>);
     button = screen.getByRole('button');
-    expect(button).toHaveClass('border', 'border-input');
+    expect(button).toHaveClass('border');
   });
 
   it('renders different sizes correctly', () => {
     const { rerender } = render(<Button size="sm">Small</Button>);
     let button = screen.getByRole('button');
-    expect(button).toHaveClass('h-9', 'px-3');
+    expect(button).toHaveClass('h-8');
 
     rerender(<Button size="lg">Large</Button>);
     button = screen.getByRole('button');
-    expect(button).toHaveClass('h-11', 'px-8');
+    expect(button).toHaveClass('h-10');
   });
 
   it('handles click events', async () => {

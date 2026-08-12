@@ -1,10 +1,18 @@
 import os
 import json
 from typing import List, Dict, Any, Optional
-from groq import Groq
-from openai import OpenAI
 
-_groq_client: Optional[Groq] = None
+try:
+    from groq import Groq
+except ImportError:
+    Groq = None
+
+try:
+    from openai import OpenAI
+except ImportError:
+    OpenAI = None
+
+_groq_client: Optional[Any] = None
 
 GROQ_MODELS = {
     "analysis": "llama-3.3-70b-versatile",
@@ -19,11 +27,11 @@ OPENROUTER_MODELS = {
 }
 
 
-def _get_groq_client() -> Optional[Groq]:
+def _get_groq_client() -> Optional[Any]:
     global _groq_client
     if _groq_client is None:
         api_key = os.getenv("GROQ_API_KEY")
-        if api_key:
+        if api_key and Groq is not None:
             _groq_client = Groq(api_key=api_key)
     return _groq_client
 
@@ -47,7 +55,7 @@ def _complete(messages: List[Dict[str, str]], task: str, temperature: float, max
             print(f"Groq failed for {task}: {e}")
 
     openrouter_key = os.getenv("OPENROUTER_API_KEY")
-    if openrouter_key:
+    if openrouter_key and OpenAI is not None:
         try:
             client = OpenAI(base_url="https://openrouter.ai/api/v1", api_key=openrouter_key)
             response = client.chat.completions.create(
@@ -149,17 +157,15 @@ def chat_with_data(
     if history:
         for h in history:
             messages.append({"role": h.get("role", "user"), "content": h.get("content", "")})
-    messages.append({
-        "role": "user",
-        "content": f"""You are a helpful data analyst assistant. Answer the user's question about the following data.
+    system_prompt = f"""You are a helpful data analyst assistant. Answer the user's question about the following data.
 
 Data sample ({min(len(data), 100)} rows):
 {sample}
 
-User question: {question}
-
 Answer clearly and concisely. If the answer requires calculations, show your work. If the data doesn't contain the answer, say so."""
-    })
+    
+    messages.insert(0, {"role": "system", "content": system_prompt})
+    messages.append({"role": "user", "content": question})
 
     return _complete(
         messages=messages,

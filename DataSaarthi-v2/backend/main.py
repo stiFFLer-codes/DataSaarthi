@@ -121,8 +121,13 @@ async def upload_csv(
     if not file.filename.endswith(".csv"):
         raise HTTPException(400, "Only CSV files are supported")
     content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(413, "File too large. Maximum size is 5MB.")
     try:
         columns, rows, dtypes = data_service.parse_csv(content)
+        # Limit rows to prevent OOM
+        if len(rows) > 5000:
+            rows = rows[:5000]
         summary = data_service.generate_summary(rows, columns)
         anomalies = data_service.detect_anomalies(rows, columns)
         return {
@@ -144,9 +149,16 @@ async def upload_csv_raw(
     user: Dict[str, Any] = Depends(get_current_user),
 ):
     """Lightweight upload — just parse, no analysis."""
+    if not file.filename.endswith(".csv"):
+        raise HTTPException(400, "Only CSV files are supported")
     content = await file.read()
+    if len(content) > 5 * 1024 * 1024:
+        raise HTTPException(413, "File too large. Maximum size is 5MB.")
     try:
         columns, rows, dtypes = data_service.parse_csv(content)
+        # Limit rows to prevent OOM
+        if len(rows) > 5000:
+            rows = rows[:5000]
         return {
             "filename": file.filename,
             "columns": columns,
@@ -265,6 +277,10 @@ def export_csv(
 # ──────────────────────────────────────────────
 # Reports (saved to Supabase)
 # ──────────────────────────────────────────────
+def verify_ownership(user: Dict[str, Any], target_user_id: str):
+    if user["id"] != target_user_id:
+        raise HTTPException(403, "Forbidden: Cannot access reports for another user")
+
 @app.post("/reports/save")
 def save_report(
     user_id: str = Form(...),
@@ -272,6 +288,7 @@ def save_report(
     content: str = Form(...),
     user: Dict[str, Any] = Depends(get_current_user),
 ):
+    verify_ownership(user, user_id)
     try:
         report = supabase_service.save_report(user_id, title, content)
         return {"status": "success", "report": report}
@@ -280,6 +297,7 @@ def save_report(
 
 @app.get("/reports/{user_id}")
 def get_reports(user_id: str, user: Dict[str, Any] = Depends(get_current_user)):
+    verify_ownership(user, user_id)
     try:
         reports = supabase_service.get_reports(user_id)
         return {"reports": reports}

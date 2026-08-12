@@ -1,18 +1,13 @@
-import pandas as pd
-import numpy as np
 from typing import List, Dict, Any, Tuple
-from io import BytesIO, StringIO
-from sklearn.cluster import KMeans
-from scipy import stats
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
-from reportlab.lib.styles import getSampleStyleSheet
-from reportlab.lib.pagesizes import letter
-from reportlab.lib.units import inch
+from io import BytesIO
 import base64
 import html
 
 def parse_csv(content: bytes) -> Tuple[List[str], List[Dict[str, Any]], Dict[str, str]]:
     """Parse CSV bytes into structured data."""
+    import pandas as pd
+    import numpy as np
+
     df = pd.read_csv(BytesIO(content))
     columns = df.columns.tolist()
     # Convert to records, handling NaN
@@ -33,6 +28,9 @@ def parse_csv(content: bytes) -> Tuple[List[str], List[Dict[str, Any]], Dict[str
 
 def generate_summary(data: List[Dict[str, Any]], columns: List[str]) -> Dict[str, Any]:
     """Generate descriptive statistics."""
+    import pandas as pd
+    import numpy as np
+
     df = pd.DataFrame(data)
     summary = {}
     for col in columns:
@@ -60,6 +58,10 @@ def generate_summary(data: List[Dict[str, Any]], columns: List[str]) -> Dict[str
 
 def detect_anomalies(data: List[Dict[str, Any]], columns: List[str]) -> List[Dict[str, Any]]:
     """Detect anomalies using Z-score and IQR."""
+    import pandas as pd
+    import numpy as np
+    from scipy import stats
+
     df = pd.DataFrame(data)
     anomalies = []
     numeric_cols = [c for c in columns if pd.api.types.is_numeric_dtype(df[c])]
@@ -87,6 +89,9 @@ def detect_anomalies(data: List[Dict[str, Any]], columns: List[str]) -> List[Dic
 
 def generate_discrepancy_report(source: List[Dict[str, Any]], target: List[Dict[str, Any]]) -> Tuple[str, List[str]]:
     """Compare two datasets row-by-row and column-by-column."""
+    import pandas as pd
+    import numpy as np
+
     source_df = pd.DataFrame(source)
     target_df = pd.DataFrame(target)
     lines = []
@@ -117,14 +122,26 @@ def generate_discrepancy_report(source: List[Dict[str, Any]], target: List[Dict[
     lines.append("")
     min_rows = min(len(source_df), len(target_df))
     row_diffs = []
-    for i in range(min_rows):
-        for col in common:
-            sv = source_df.iloc[i][col]
-            tv = target_df.iloc[i][col]
-            if pd.isna(sv) and pd.isna(tv):
-                continue
-            if str(sv) != str(tv):
-                row_diffs.append(f"Row {i+1}, Column '{col}': source='{sv}' vs target='{tv}'")
+    
+    if min_rows > 0 and common:
+        common_list = list(common)
+        source_common = source_df.iloc[:min_rows][common_list]
+        target_common = target_df.iloc[:min_rows][common_list]
+        
+        source_str_array = source_common.astype(str)
+        target_str_array = target_common.astype(str)
+        
+        mask = (source_str_array != target_str_array) & ~(source_common.isna() & target_common.isna())
+        rows_idx, cols_idx = np.where(mask)
+        
+        source_vals = source_common.values
+        target_vals = target_common.values
+        
+        for row_idx, col_idx in zip(rows_idx, cols_idx):
+            col = common_list[col_idx]
+            source_val = source_vals[row_idx, col_idx]
+            target_val = target_vals[row_idx, col_idx]
+            row_diffs.append(f"Row {row_idx+1}, Column '{col}': source='{source_val}' vs target='{target_val}'")
     if row_diffs:
         lines.append("Differences in common rows:")
         lines.extend(row_diffs)
@@ -141,6 +158,11 @@ def generate_discrepancy_report(source: List[Dict[str, Any]], target: List[Dict[
 
 def create_pdf(report_text: str, filename: str = "report.pdf") -> str:
     """Create a multi-page PDF from report text and return a base64 data URL."""
+    from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.units import inch
+
     buffer = BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -168,13 +190,19 @@ def create_pdf(report_text: str, filename: str = "report.pdf") -> str:
 
 def export_csv(data: List[Dict[str, Any]], columns: List[str]) -> str:
     """Export data to CSV string."""
+    import pandas as pd
+
     df = pd.DataFrame(data, columns=columns)
     return df.to_csv(index=False)
 
 def get_numeric_columns(data: List[Dict[str, Any]], columns: List[str]) -> List[str]:
+    import pandas as pd
+
     df = pd.DataFrame(data)
     return [c for c in columns if pd.api.types.is_numeric_dtype(df[c])]
 
 def get_categorical_columns(data: List[Dict[str, Any]], columns: List[str]) -> List[str]:
+    import pandas as pd
+
     df = pd.DataFrame(data)
     return [c for c in columns if not pd.api.types.is_numeric_dtype(df[c])]
