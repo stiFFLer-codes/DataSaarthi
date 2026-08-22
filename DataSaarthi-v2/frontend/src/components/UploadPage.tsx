@@ -188,6 +188,11 @@ export function UploadPage({
                         <p className="text-caption text-[hsl(var(--text-tertiary))]">
                           {ds.row_count.toLocaleString()} rows × {ds.column_count} columns
                         </p>
+                        {ds.anomalies && ds.anomalies.length > 0 && (
+                          <p className="text-caption text-[hsl(var(--warning))]">
+                            {ds.anomalies.length} anomal{ds.anomalies.length === 1 ? "y" : "ies"} detected
+                          </p>
+                        )}
                       </div>
                     </div>
                     <Button

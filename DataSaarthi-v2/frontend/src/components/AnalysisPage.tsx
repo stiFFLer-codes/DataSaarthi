@@ -12,20 +12,91 @@ import { Brain, Loader2, Download, FileText, Save, Check } from "lucide-react";
 
 function SimpleMarkdown({ text }: { text: string }) {
   const lines = text.split("\n");
-  return (
-    <div className="space-y-2">
-      {lines.map((line, i) => {
-        const trimmed = line.trim();
-        if (trimmed.startsWith("# ")) return <h1 key={i} className="text-h1 text-[hsl(var(--text-primary))] mt-6 mb-3">{trimmed.slice(2)}</h1>;
-        if (trimmed.startsWith("## ")) return <h2 key={i} className="text-h2 text-[hsl(var(--text-primary))] mt-5 mb-2">{trimmed.slice(3)}</h2>;
-        if (trimmed.startsWith("### ")) return <h3 key={i} className="text-base font-display font-semibold text-[hsl(var(--text-primary))] mt-4 mb-2">{trimmed.slice(4)}</h3>;
-        if (trimmed.startsWith("- ")) return <li key={i} className="text-sm text-[hsl(var(--text-secondary))] ml-4">{trimmed.slice(2)}</li>;
-        if (trimmed.startsWith("**") && trimmed.endsWith("**")) return <p key={i} className="font-semibold text-[hsl(var(--text-primary))]">{trimmed.slice(2, -2)}</p>;
-        if (trimmed === "") return <div key={i} className="h-2" />;
-        return <p key={i} className="text-sm text-[hsl(var(--text-secondary))] leading-relaxed">{line}</p>;
-      })}
-    </div>
-  );
+  const elements: React.ReactNode[] = [];
+  let inCodeBlock = false;
+  let codeLines: string[] = [];
+
+  const renderInline = (line: string, key: number) => {
+    const parts: React.ReactNode[] = [];
+    let remaining = line;
+    let partIndex = 0;
+
+    while (remaining.length > 0) {
+      const codeMatch = remaining.match(/^(.*?)`([^`]+)`(.*)$/);
+      const boldMatch = remaining.match(/^(.*?)\*\*([^*]+)\*\*(.*)$/);
+
+      const firstMatch = codeMatch && boldMatch
+        ? (codeMatch.index ?? 0) <= (boldMatch.index ?? 0) ? codeMatch : boldMatch
+        : codeMatch || boldMatch;
+
+      if (!firstMatch) {
+        parts.push(remaining);
+        break;
+      }
+
+      const [, before, content, after] = firstMatch;
+      if (before) parts.push(before);
+      if (firstMatch === codeMatch) {
+        parts.push(<code key={`${key}-${partIndex++}`} className="px-1.5 py-0.5 rounded bg-[hsl(var(--bezel-outer-bg))] text-[hsl(var(--accent))] font-code text-xs">{content}</code>);
+      } else {
+        parts.push(<strong key={`${key}-${partIndex++}`} className="font-semibold text-[hsl(var(--text-primary))]">{content}</strong>);
+      }
+      remaining = after;
+    }
+    return parts;
+  };
+
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const trimmed = line.trim();
+
+    if (trimmed.startsWith("```")) {
+      if (inCodeBlock) {
+        elements.push(
+          <pre key={`code-${i}`} className="bg-[hsl(var(--bezel-outer-bg))] rounded-lg p-4 overflow-x-auto text-sm font-code text-[hsl(var(--text-secondary))] my-3">
+            <code>{codeLines.join("\n")}</code>
+          </pre>
+        );
+        codeLines = [];
+        inCodeBlock = false;
+      } else {
+        inCodeBlock = true;
+      }
+      continue;
+    }
+
+    if (inCodeBlock) {
+      codeLines.push(line);
+      continue;
+    }
+
+    if (trimmed === "") {
+      elements.push(<div key={i} className="h-2" />);
+    } else if (trimmed.startsWith("# ")) {
+      elements.push(<h1 key={i} className="text-h1 text-[hsl(var(--text-primary))] mt-6 mb-3">{renderInline(trimmed.slice(2), i)}</h1>);
+    } else if (trimmed.startsWith("## ")) {
+      elements.push(<h2 key={i} className="text-h2 text-[hsl(var(--text-primary))] mt-5 mb-2">{renderInline(trimmed.slice(3), i)}</h2>);
+    } else if (trimmed.startsWith("### ")) {
+      elements.push(<h3 key={i} className="text-base font-display font-semibold text-[hsl(var(--text-primary))] mt-4 mb-2">{renderInline(trimmed.slice(4), i)}</h3>);
+    } else if (trimmed.startsWith("- ")) {
+      elements.push(<li key={i} className="text-sm text-[hsl(var(--text-secondary))] ml-4 list-disc">{renderInline(trimmed.slice(2), i)}</li>);
+    } else if (/^\d+\.\s/.test(trimmed)) {
+      const content = trimmed.replace(/^\d+\.\s/, "");
+      elements.push(<li key={i} className="text-sm text-[hsl(var(--text-secondary))] ml-4 list-decimal">{renderInline(content, i)}</li>);
+    } else {
+      elements.push(<p key={i} className="text-sm text-[hsl(var(--text-secondary))] leading-relaxed">{renderInline(line, i)}</p>);
+    }
+  }
+
+  if (inCodeBlock && codeLines.length > 0) {
+    elements.push(
+      <pre key="code-unclosed" className="bg-[hsl(var(--bezel-outer-bg))] rounded-lg p-4 overflow-x-auto text-sm font-code text-[hsl(var(--text-secondary))] my-3">
+        <code>{codeLines.join("\n")}</code>
+      </pre>
+    );
+  }
+
+  return <div className="space-y-2">{elements}</div>;
 }
 
 interface AnalysisPageProps {

@@ -104,15 +104,6 @@ export const api = {
     form.append("report_text", report_text);
     return postForm<{ pdf_url: string }>("/report/pdf", form);
   },
-  exportCsv: (data: unknown[], columns: string[]) =>
-    post<{ csv: string }>("/export/csv", { data, columns }),
-  dataSummary: (data: unknown[], columns: string[]) =>
-    post<{
-      summary: Record<string, any>;
-      anomalies: any[];
-      numeric_columns: string[];
-      categorical_columns: string[];
-    }>("/data/summary", { data, columns }),
   saveReport: (userId: string, title: string, content: string) => {
     const form = new FormData();
     form.append("user_id", userId);
