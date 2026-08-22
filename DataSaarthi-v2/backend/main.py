@@ -304,6 +304,20 @@ def get_reports(user_id: str, user: Dict[str, Any] = Depends(get_current_user)):
     except Exception as e:
         raise HTTPException(500, str(e))
 
+@app.delete("/reports/{report_id}")
+def delete_report(report_id: str, user: Dict[str, Any] = Depends(get_current_user)):
+    try:
+        report = supabase_service.get_report_by_id(report_id)
+        if not report:
+            raise HTTPException(404, "Report not found")
+        verify_ownership(user, report["user_id"])
+        supabase_service.delete_report(report_id)
+        return {"status": "deleted"}
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

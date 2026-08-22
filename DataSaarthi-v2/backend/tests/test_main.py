@@ -66,3 +66,51 @@ def test_generate_pdf(mock_create_pdf):
     response = client.post("/report/pdf", data={"report_text": "text"})
     assert response.status_code == 200
     assert response.json()["pdf_url"] == "data:application/pdf;base64,mock"
+
+@patch("services.supabase_service.save_report")
+def test_save_report_ownership(mock_save):
+    """Verify that save_report enforces ownership — mismatched user_id is rejected."""
+    mock_save.return_value = {"id": "1", "title": "Test"}
+
+    response = client.post(
+        "/reports/save",
+        data={"user_id": "test_user", "title": "Test", "content": "Content"}
+    )
+    assert response.status_code == 200
+
+    response = client.post(
+        "/reports/save",
+        data={"user_id": "other_user", "title": "Test", "content": "Content"}
+    )
+    assert response.status_code == 403
+
+@patch("services.supabase_service.get_reports")
+def test_get_reports_ownership(mock_get):
+    """Verify that get_reports enforces ownership — cannot fetch another user's reports."""
+    mock_get.return_value = [{"id": "1"}]
+
+    response = client.get("/reports/test_user")
+    assert response.status_code == 200
+
+    response = client.get("/reports/other_user")
+    assert response.status_code == 403
+
+@patch("services.supabase_service.delete_report")
+@patch("services.supabase_service.get_report_by_id")
+def test_delete_report_ownership(mock_get, mock_delete):
+    """Verify that delete_report enforces ownership — cannot delete another user's report."""
+    mock_get.return_value = {"id": "1", "user_id": "test_user"}
+
+    response = client.delete("/reports/1")
+    assert response.status_code == 200
+
+    mock_get.return_value = {"id": "2", "user_id": "other_user"}
+    response = client.delete("/reports/2")
+    assert response.status_code == 403
+
+@patch("services.supabase_service.get_report_by_id")
+def test_delete_report_not_found(mock_get):
+    """Verify 404 for non-existent report."""
+    mock_get.return_value = None
+    response = client.delete("/reports/nonexistent")
+    assert response.status_code == 404

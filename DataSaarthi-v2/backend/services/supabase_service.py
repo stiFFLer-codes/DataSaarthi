@@ -52,3 +52,12 @@ def get_reports(user_id: str) -> list:
     sb = get_supabase()
     result = sb.table("reports").select("*").eq("user_id", user_id).order("created_at", desc=True).execute()
     return result.data if result.data else []
+
+def get_report_by_id(report_id: str) -> Optional[Dict[str, Any]]:
+    sb = get_supabase()
+    result = sb.table("reports").select("*").eq("id", report_id).execute()
+    return result.data[0] if result.data else None
+
+def delete_report(report_id: str) -> None:
+    sb = get_supabase()
+    sb.table("reports").delete().eq("id", report_id).execute()
