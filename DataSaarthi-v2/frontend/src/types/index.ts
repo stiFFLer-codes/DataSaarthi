@@ -21,4 +21,4 @@ export interface ChatMessage {
 }
 
 export type ChartType = "scatter" | "line" | "bar" | "histogram" | "pie" | "3d_scatter";
-export type Page = "upload" | "editor" | "charts" | "analysis" | "compare" | "chat";
+export type Page = "upload" | "editor" | "charts" | "analysis" | "compare" | "chat" | "reports";

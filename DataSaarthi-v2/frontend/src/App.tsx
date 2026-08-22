@@ -9,6 +9,7 @@ import { ChartsPage } from "@/components/ChartsPage";
 import { AnalysisPage } from "@/components/AnalysisPage";
 import { ComparePage } from "@/components/ComparePage";
 import { ChatPage } from "@/components/ChatPage";
+import { ReportsPage } from "@/components/ReportsPage";
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -74,6 +75,8 @@ export default function App() {
         return <ComparePage datasets={datasets} reference={reference} />;
       case "chat":
         return <ChatPage datasets={datasets} />;
+      case "reports":
+        return <ReportsPage userId={user.id} />;
       default:
         return null;
     }

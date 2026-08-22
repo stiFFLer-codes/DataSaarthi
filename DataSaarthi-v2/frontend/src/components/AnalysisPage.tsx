@@ -1,13 +1,14 @@
 import { useState } from "react";
 import type { Dataset } from "@/types";
 import { api } from "@/services/api";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Brain, Loader2, Download, FileText } from "lucide-react";
+import { Brain, Loader2, Download, FileText, Save, Check } from "lucide-react";
 
 function SimpleMarkdown({ text }: { text: string }) {
   const lines = text.split("\n");
@@ -32,10 +33,13 @@ interface AnalysisPageProps {
 }
 
 export function AnalysisPage({ datasets }: AnalysisPageProps) {
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("individual");
   const [reports, setReports] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState<Record<string, boolean>>({});
+  const [saved, setSaved] = useState<Record<string, boolean>>({});
 
   const runAnalysis = async (ds: Dataset) => {
     setError("");
@@ -86,6 +90,22 @@ export function AnalysisPage({ datasets }: AnalysisPageProps) {
     a.download = `${name}_analysis.csv`;
     a.click();
     URL.revokeObjectURL(url);
+  };
+
+  const saveReport = async (dsId: string, filename: string, text: string) => {
+    if (!user) return;
+    const title = window.prompt("Enter report title:", `${filename} Analysis`);
+    if (!title) return;
+    setSaving((p) => ({ ...p, [dsId]: true }));
+    try {
+      await api.saveReport(user.id, title, text);
+      setSaved((p) => ({ ...p, [dsId]: true }));
+      setTimeout(() => setSaved((p) => ({ ...p, [dsId]: false })), 3000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSaving((p) => ({ ...p, [dsId]: false }));
+    }
   };
 
   if (datasets.length === 0) {
@@ -176,6 +196,16 @@ export function AnalysisPage({ datasets }: AnalysisPageProps) {
                             <Download className="mr-2 h-4 w-4" />
                             CSV
                           </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => saveReport(ds.id, ds.filename, reports[ds.id])}
+                            disabled={saving[ds.id] || saved[ds.id]}
+                            className="border-[hsl(var(--border-hairline))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--elevated))]"
+                          >
+                            {saving[ds.id] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : saved[ds.id] ? <Check className="mr-2 h-4 w-4 text-[hsl(var(--success))]" /> : <Save className="mr-2 h-4 w-4" />}
+                            {saved[ds.id] ? "Saved" : "Save"}
+                          </Button>
                         </div>
                       </div>
                     </div>
@@ -237,6 +267,16 @@ export function AnalysisPage({ datasets }: AnalysisPageProps) {
                         >
                           <Download className="mr-2 h-4 w-4" />
                           PDF
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => saveReport("combined", "Combined", reports["combined"])}
+                          disabled={saving["combined"] || saved["combined"]}
+                          className="border-[hsl(var(--border-hairline))] text-[hsl(var(--text-secondary))] hover:bg-[hsl(var(--elevated))]"
+                        >
+                          {saving["combined"] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : saved["combined"] ? <Check className="mr-2 h-4 w-4 text-[hsl(var(--success))]" /> : <Save className="mr-2 h-4 w-4" />}
+                          {saved["combined"] ? "Saved" : "Save"}
                         </Button>
                       </div>
                     </div>

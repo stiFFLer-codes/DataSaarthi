@@ -1,12 +1,13 @@
 import { useState } from "react";
 import type { Dataset } from "@/types";
 import { api } from "@/services/api";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
-import { GitCompare, Loader2, Download, AlertTriangle, FileText } from "lucide-react";
+import { GitCompare, Loader2, Download, AlertTriangle, FileText, Save, Check } from "lucide-react";
 
 interface ComparePageProps {
   datasets: Dataset[];
@@ -14,10 +15,13 @@ interface ComparePageProps {
 }
 
 export function ComparePage({ datasets, reference }: ComparePageProps) {
+  const { user } = useAuth();
   const [reports, setReports] = useState<Record<string, { report: string; differences: string[]; summary: string }>>({});
   const [loading, setLoading] = useState<Record<string, boolean>>({});
   const [pdfLoading, setPdfLoading] = useState<Record<string, boolean>>({});
   const [error, setError] = useState("");
+  const [saving, setSaving] = useState<Record<string, boolean>>({});
+  const [saved, setSaved] = useState<Record<string, boolean>>({});
 
   const runCompare = async (ds: Dataset) => {
     if (!reference) return;
@@ -46,6 +50,22 @@ export function ComparePage({ datasets, reference }: ComparePageProps) {
       setError(err.message);
     } finally {
       setPdfLoading((p) => ({ ...p, [ds.id]: false }));
+    }
+  };
+
+  const saveReport = async (ds: Dataset) => {
+    if (!user || !reports[ds.id]) return;
+    const title = window.prompt("Enter report title:", `${ds.filename} Comparison`);
+    if (!title) return;
+    setSaving((p) => ({ ...p, [ds.id]: true }));
+    try {
+      await api.saveReport(user.id, title, reports[ds.id].report);
+      setSaved((p) => ({ ...p, [ds.id]: true }));
+      setTimeout(() => setSaved((p) => ({ ...p, [ds.id]: false })), 3000);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setSaving((p) => ({ ...p, [ds.id]: false }));
     }
   };
 
@@ -159,6 +179,15 @@ export function ComparePage({ datasets, reference }: ComparePageProps) {
                   >
                     {pdfLoading[ds.id] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
                     PDF
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => saveReport(ds)}
+                    disabled={saving[ds.id] || saved[ds.id]}
+                  >
+                    {saving[ds.id] ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : saved[ds.id] ? <Check className="mr-2 h-4 w-4 text-[hsl(var(--success))]" /> : <Save className="mr-2 h-4 w-4" />}
+                    {saved[ds.id] ? "Saved" : "Save"}
                   </Button>
                 </div>
               </CardContent>

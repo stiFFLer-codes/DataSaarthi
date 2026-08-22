@@ -44,6 +44,30 @@ async function postForm<T>(path: string, form: FormData): Promise<T> {
   return res.json();
 }
 
+async function get<T>(path: string): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "GET",
+    headers: authHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
+async function del<T>(path: string): Promise<T> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: "DELETE",
+    headers: authHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ detail: res.statusText }));
+    throw new Error(err.detail || `HTTP ${res.status}`);
+  }
+  return res.json();
+}
+
 async function uploadFile(file: File, lightweight = false): Promise<Dataset> {
   const form = new FormData();
   form.append("file", file);
@@ -89,6 +113,17 @@ export const api = {
       numeric_columns: string[];
       categorical_columns: string[];
     }>("/data/summary", { data, columns }),
+  saveReport: (userId: string, title: string, content: string) => {
+    const form = new FormData();
+    form.append("user_id", userId);
+    form.append("title", title);
+    form.append("content", content);
+    return postForm<{ status: string; report: { id: string; user_id: string; title: string; content: string; created_at: string } }>("/reports/save", form);
+  },
+  getReports: (userId: string) =>
+    get<{ reports: { id: string; user_id: string; title: string; content: string; created_at: string }[] }>(`/reports/${userId}`),
+  deleteReport: (reportId: string) =>
+    del<{ status: string }>(`/reports/${reportId}`),
   // Auth proxy
   register: (email: string, password: string) => {
     const form = new FormData();

@@ -9,6 +9,7 @@ import {
   Brain,
   GitCompare,
   MessageSquare,
+  FolderOpen,
   LogOut,
   Menu,
   X,
@@ -27,6 +28,7 @@ const navItems: { id: Page; label: string; icon: React.ElementType }[] = [
   { id: "analysis", label: "AI Analysis", icon: Brain },
   { id: "compare", label: "Compare", icon: GitCompare },
   { id: "chat", label: "Chat with Data", icon: MessageSquare },
+  { id: "reports", label: "Reports", icon: FolderOpen },
 ];
 
 export function Layout({ currentPage, setPage, children }: LayoutProps) {
