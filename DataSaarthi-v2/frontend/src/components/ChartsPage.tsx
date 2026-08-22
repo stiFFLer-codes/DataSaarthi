@@ -107,6 +107,24 @@ export function ChartsPage({ datasets }: ChartsPageProps) {
   const allCols = ds?.columns || [];
 
   useEffect(() => {
+    if (ds && ds.columns.length > 0) {
+      if (!xCol || !ds.columns.includes(xCol)) {
+        setXCol(ds.columns[0]);
+      }
+      const numCol = ds.columns.find((c) => {
+        const dtype = ds.dtypes[c] || "";
+        return /int|float|number|double/.test(dtype);
+      });
+      if (!yCol || !ds.columns.includes(yCol)) {
+        setYCol(numCol || ds.columns[1] || ds.columns[0]);
+      }
+      if (!zCol || !ds.columns.includes(zCol)) {
+        setZCol(ds.columns[2] || ds.columns[0]);
+      }
+    }
+  }, [ds?.id, ds?.columns]);
+
+  useEffect(() => {
     if (!ds || !xCol) return;
     if (!chartDiv.current) return;
 

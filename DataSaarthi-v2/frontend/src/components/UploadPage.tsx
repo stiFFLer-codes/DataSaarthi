@@ -114,7 +114,15 @@ export function UploadPage({
                 />
               </div>
 
-              {uploading && <Progress value={progress} className="h-2" />}
+              {uploading && (
+                <div className="space-y-2 pt-2 animate-fade-up">
+                  <div className="flex items-center justify-between text-xs font-mono text-[hsl(var(--text-secondary))]">
+                    <span>Parsing and validating CSV...</span>
+                    <span>{Math.round(progress)}%</span>
+                  </div>
+                  <Progress value={progress} className="h-2 bg-[hsl(var(--bezel-outer-bg))]" />
+                </div>
+              )}
             </CardContent>
           </Card>
         </div>

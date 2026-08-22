@@ -8,6 +8,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { GitCompare, Loader2, Download, AlertTriangle, FileText, Save, Check } from "lucide-react";
+import { SimpleMarkdown } from "@/components/SimpleMarkdown";
 
 interface ComparePageProps {
   datasets: Dataset[];
@@ -148,10 +149,8 @@ export function ComparePage({ datasets, reference }: ComparePageProps) {
                   <span className="text-xs text-[hsl(var(--text-tertiary))]">{reports[ds.id].summary}</span>
                 </div>
 
-                <ScrollArea className="h-[400px] bg-[hsl(var(--canvas))] p-5 font-code text-[hsl(var(--text-secondary))] whitespace-pre-wrap rounded-xl border border-[hsl(var(--border-hairline))]">
-                  <pre className="text-sm text-[hsl(var(--text-secondary))] whitespace-pre-wrap font-code leading-relaxed">
-                    {reports[ds.id].report}
-                  </pre>
+                <ScrollArea className="h-[400px] bg-[hsl(var(--canvas))] p-5 rounded-xl border border-[hsl(var(--border-hairline))]">
+                  <SimpleMarkdown text={reports[ds.id].report} />
                 </ScrollArea>
 
                 <div className="flex gap-2">

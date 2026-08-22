@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, LogIn, UserPlus, User } from "lucide-react";
+import { SaarthiLogo } from "@/components/SaarthiLogo";
 
 export function AuthPage() {
   const { login, guestLogin } = useAuth();
@@ -77,12 +78,12 @@ export function AuthPage() {
       <div className="relative z-10 w-full max-w-[420px]">
         <div className="rounded-[var(--bezel-radius-outer)] bg-[hsl(var(--bezel-outer-bg))] ring-1 ring-[hsl(var(--bezel-outer-ring))] p-[var(--bezel-pad)] shadow-ambient">
           <Card className="rounded-[var(--bezel-radius-inner)] shadow-bezel-inner w-full border-[hsl(var(--border-hairline))] bg-[hsl(var(--elevated))]">
-            <CardHeader className="text-center">
-              <div className="w-12 h-12 rounded-2xl bg-[hsl(var(--accent))] flex items-center justify-center shadow-lifted mx-auto">
-                <span className="text-white font-display font-bold text-lg">DS</span>
+            <CardHeader className="text-center pb-2">
+              <div className="w-12 h-12 rounded-2xl bg-[hsl(var(--accent-muted))] text-[hsl(var(--accent))] flex items-center justify-center shadow-lifted mx-auto">
+                <SaarthiLogo size={26} />
               </div>
-              <CardTitle className="font-display text-h1 text-[hsl(var(--text-primary))] text-center mt-4">DataSaarthi</CardTitle>
-              <p className="text-caption text-[hsl(var(--text-tertiary))] text-center">AI-Powered Data Analytics</p>
+              <CardTitle className="font-display text-h1 text-[hsl(var(--text-primary))] text-center mt-3">DataSaarthi</CardTitle>
+              <p className="text-caption text-[hsl(var(--text-tertiary))] text-center">Your Intelligent Data Charioteer</p>
             </CardHeader>
             <CardContent>
               <Tabs value={tab} onValueChange={setTab} className="w-full">

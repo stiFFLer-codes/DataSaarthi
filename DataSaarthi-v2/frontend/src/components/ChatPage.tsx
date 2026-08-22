@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Send, Loader2, Bot, User as UserIcon } from "lucide-react";
+import { SimpleMarkdown } from "@/components/SimpleMarkdown";
 
 interface ChatPageProps {
   datasets: Dataset[];
@@ -130,7 +131,11 @@ export function ChatPage({ datasets }: ChatPageProps) {
                             {msg.role === "user" ? "You" : "DataSaarthi AI"}
                           </span>
                         </div>
-                        <div className="whitespace-pre-wrap">{msg.content}</div>
+                        {msg.role === "user" ? (
+                          <div className="whitespace-pre-wrap">{msg.content}</div>
+                        ) : (
+                          <SimpleMarkdown text={msg.content} />
+                        )}
                       </div>
                     </div>
                   ))}

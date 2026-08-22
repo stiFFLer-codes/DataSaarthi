@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import type { Page } from "@/types";
 import { Button } from "@/components/ui/button";
+import { SaarthiLogo } from "@/components/SaarthiLogo";
 import {
   Upload,
   Table,
@@ -42,11 +43,20 @@ export function Layout({ currentPage, setPage, children }: LayoutProps) {
         className={`${sidebarOpen ? "w-[260px]" : "w-[72px]"} transition-[width] duration-600 ease-snap bg-[hsl(var(--elevated))] border-r border-[hsl(var(--border-hairline))] flex flex-col`}
       >
         <div className="flex items-center justify-between p-4 border-b border-[hsl(var(--border-hairline))]">
-          <div className="flex items-center gap-3 px-5 py-6">
-            <div className="w-9 h-9 rounded-xl bg-[hsl(var(--accent))] flex items-center justify-center shadow-lifted">
-              <span className="text-white font-display font-bold text-sm">DS</span>
+          <div className="flex items-center gap-3 px-2 py-2">
+            <div className="w-9 h-9 rounded-xl bg-[hsl(var(--accent-muted))] text-[hsl(var(--accent))] flex items-center justify-center shadow-xs">
+              <SaarthiLogo size={20} />
             </div>
-            {sidebarOpen && <span className="font-display font-bold text-lg tracking-tight text-[hsl(var(--text-primary))]">DataSaarthi</span>}
+            {sidebarOpen && (
+              <div className="flex flex-col min-w-0">
+                <span className="font-display font-bold text-base tracking-tight text-[hsl(var(--text-primary))] leading-tight">
+                  DataSaarthi
+                </span>
+                <span className="text-[10px] font-mono tracking-widest text-[hsl(var(--text-tertiary))] uppercase">
+                  Data Guide
+                </span>
+              </div>
+            )}
           </div>
           <Button
             variant="ghost"

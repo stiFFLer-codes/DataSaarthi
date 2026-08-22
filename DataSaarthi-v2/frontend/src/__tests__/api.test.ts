@@ -76,4 +76,74 @@ describe('api.ts', () => {
     expect(callArgs[1].body).toBeInstanceOf(FormData);
     expect(callArgs[1].body.get('email')).toBe('test@example.com');
   });
+
+  it('saveReport sends correct payload via FormData', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        status: 'success',
+        report: {
+          id: 'rep-123',
+          user_id: 'usr-456',
+          title: 'Q4 Anomaly Report',
+          content: '# Anomaly\nDetected 2 outliers',
+          created_at: '2026-08-22T00:00:00Z',
+        },
+      }),
+    });
+
+    const res = await api.saveReport('usr-456', 'Q4 Anomaly Report', '# Anomaly\nDetected 2 outliers');
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/reports/save'),
+      expect.objectContaining({ method: 'POST' })
+    );
+    const form = mockFetch.mock.calls[0][1].body as FormData;
+    expect(form.get('user_id')).toBe('usr-456');
+    expect(form.get('title')).toBe('Q4 Anomaly Report');
+    expect(form.get('content')).toBe('# Anomaly\nDetected 2 outliers');
+    expect(res.status).toBe('success');
+    expect(res.report.id).toBe('rep-123');
+  });
+
+  it('getReports fetches reports for a user', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({
+        reports: [
+          {
+            id: 'rep-1',
+            user_id: 'usr-456',
+            title: 'Report 1',
+            content: 'Content 1',
+            created_at: '2026-08-22T00:00:00Z',
+          },
+        ],
+      }),
+    });
+
+    const res = await api.getReports('usr-456');
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/reports/usr-456'),
+      expect.objectContaining({ method: 'GET' })
+    );
+    expect(res.reports).toHaveLength(1);
+    expect(res.reports[0].title).toBe('Report 1');
+  });
+
+  it('deleteReport sends DELETE request', async () => {
+    mockFetch.mockResolvedValueOnce({
+      ok: true,
+      json: async () => ({ status: 'deleted' }),
+    });
+
+    const res = await api.deleteReport('rep-123');
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      expect.stringContaining('/reports/rep-123'),
+      expect.objectContaining({ method: 'DELETE' })
+    );
+    expect(res.status).toBe('deleted');
+  });
 });
